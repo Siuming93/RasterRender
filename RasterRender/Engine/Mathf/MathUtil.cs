@@ -1,4 +1,7 @@
-﻿namespace RasterRender.Engine.Mathf
+﻿using System;
+using System.Collections.Generic;
+
+namespace RasterRender.Engine.Mathf
 {
     public class MathUtil
     {
@@ -23,6 +26,30 @@
             if ((double)value > 1.0)
                 return 1f;
             return value;
+        }
+
+        private static Dictionary<int, float> _cos = new Dictionary<int, float>();
+        public static float Fast_Cos(float angle)
+        {
+            int index = (int)(angle + 0.5f);
+            if (!_cos.ContainsKey(index % 360))
+            {
+                _cos[index % 360] = (float)Math.Cos(index);
+            }
+
+            return _cos[index % 360];
+        }
+
+        private static Dictionary<int, float> _sin = new Dictionary<int, float>();
+        public static float Fast_Sin(float angle)
+        {
+            int index = (int)(angle + 0.5f);
+            if (!_sin.ContainsKey(index % 360))
+            {
+                _sin[index % 360] = (float)Math.Sin(index);
+            }
+
+            return _sin[index % 360];
         }
     }
 }

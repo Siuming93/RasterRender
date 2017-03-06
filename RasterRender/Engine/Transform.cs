@@ -1,6 +1,4 @@
-﻿
-
-using RasterRender.Engine.Mathf;
+﻿using RasterRender.Engine.Mathf;
 
 namespace RasterRender.Engine
 {

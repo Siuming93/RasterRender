@@ -1,4 +1,6 @@
-﻿namespace RasterRender.Engine.Mathf
+﻿using System;
+
+namespace RasterRender.Engine.Mathf
 {
     public struct Vector2
     {
@@ -31,6 +33,19 @@
             this.y = y;
             this.z = z;
         }
+
+        public float Length()
+        {
+            return (float)Math.Sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+        }
+
+        public Vector3 Normalize()
+        {
+            float length_inv = 1 / this.Length();
+            return new Vector3(this.x * length_inv, this.y * length_inv, this.z * length_inv);
+        }
+
+        public static Vector3 zero = new Vector3();
     }
 
     public struct Vector4
@@ -53,6 +68,16 @@
         public static implicit operator Vector4(Vector3 v)
         {
             return new Vector4(v.x, v.y, v.z, 0);
+        }
+
+        public static Vector4 operator -(Vector4 a, Vector4 b)
+        {
+            return new Vector4(b.x - a.x, b.y - a.y, b.z - a.z, 1.0f);
+        }
+
+        public static Vector4 operator *(Vector4 a, Vector4 b)
+        {
+            return new Vector4(b.z*a.y - a.z*b.y, a.z*b.x-a.x*b.z, b.z - a.z, 1.0f);
         }
     }
 }
