@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using RasterRender.Engine.Mathf;
 
@@ -211,10 +211,32 @@ namespace RasterRender.Engine
             mcam = mt_inv*mt_uvn;
         }
 
-        //public ConverseToLocale()
+        //public ConverseToLocale(
+
+        public void World_To_Camera(GameObject gameObject)
+        {
+            //这是一个基于矩阵的函数
+            //根据传入的相机变换矩阵,将物体的世界坐标变换为相机坐标
+            //完全不考虑多边形本身,只对vlist_trans[]中的顶点进行变换
+            //因为渲染列表中的多边形表示的几何体都通过了背面剔除
+
+            //将物体的每个顶点变换为相机坐标
+            //这里假设顶点已经被变换为了世界坐标
+            //且结果存储在vlist_trans[]中
+
+            for(int vertex = 0; vertex < gameObject.num_verteices; vertex++ )
+            {
+                //使用相机对象中的矩阵mcam对定点进行变换
+                Vector4 result;     //用于存储每次变换的记过
+                result = gameObject.vlist_trans[i] * this.mcam;
+
+                gameObject.vlist_trans[i] = result;
+
+            }
+        }
     }
 }
-//{
+//{ 
 //    public class Camera
 //    {
 //        public Transform transform;
