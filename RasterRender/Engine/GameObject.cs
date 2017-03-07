@@ -52,7 +52,7 @@ namespace RasterRender.Engine
 
         public GameObject()
         {
-            transform = new Transform();
+            transform = new Transform(this, null);
             name = "New GameObject";
         }
 

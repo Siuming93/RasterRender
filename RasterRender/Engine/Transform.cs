@@ -1,4 +1,5 @@
-﻿using RasterRender.Engine.Mathf;
+﻿using System.Collections.Generic;
+using RasterRender.Engine.Mathf;
 
 namespace RasterRender.Engine
 {
@@ -12,10 +13,10 @@ namespace RasterRender.Engine
         public Vector3 localePosition;
 
         //uvn旋转矩阵
-        public Matrix4X4 localeRotation;
+        public Matrix4x4 localeRotation;
 
        	//缩放
-       	public Matrix4X4 localeScale;
+       	public Matrix4x4 localeScale;
 
        	//所对应的物体
        	public GameObject gameObject;
@@ -26,10 +27,10 @@ namespace RasterRender.Engine
        	//子节点数量
        	public int childCount{
        		get{ return 0;}
-       	};
+       	}
 
        	//转换到本地坐标的矩阵
-       	private Matrix4X4 mLocaleMatrix;
+       	private Matrix4x4 mLocaleMatrix;
 
        	//子节点链表
        	private List<Transform> _children;
@@ -41,8 +42,8 @@ namespace RasterRender.Engine
        		this.parent = parent;
 
        		this.localePosition = Vector3.zero;
-       		this.localeScale = Matrix4X4.indentity;
-       		this.localeRotation = Matrix4X4.indentity;
+       		this.localeScale = Matrix4x4.identity;
+       		this.localeRotation = Matrix4x4.identity;
        	}
 
        	public void SetParent(Transform parent)
@@ -56,19 +57,19 @@ namespace RasterRender.Engine
        		return _children[index];
        	}
 
-       	public Vector3 ConverseToLocale(Vector3 worldPosition)
-       	{
-       		Vector3 localePositionInParent;
-       		if(parent != null)
-       		{
-       			localePositionInParent = parent.ConverseToLocale(worldPosition);
-       		}
-       		else
-       		{
-       			localePositionInParent = worldPosition;
-       		}
-       		return localePositionInParent * mLocaleMatrix;
-       	}
+        public Vector3 ConverseToLocale(Vector3 worldPosition)
+        {
+            Vector3 localePositionInParent;
+            if (parent != null)
+            {
+                localePositionInParent = parent.ConverseToLocale(worldPosition);
+            }
+            else
+            {
+                localePositionInParent = worldPosition;
+            }
+            return localePositionInParent * mLocaleMatrix;
+        }
 
     }
 }

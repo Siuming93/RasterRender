@@ -1,4 +1,5 @@
-﻿using RasterRender.Engine.Mathf;
+﻿using System.Collections.Generic;
+using RasterRender.Engine.Mathf;
 
 namespace RasterRender.Engine
 {
@@ -17,7 +18,8 @@ namespace RasterRender.Engine
         /// <returns>返回物体的唯一id</returns>
         public string AddGameObject(GameObject gameObject)
         {
-
+            mObjectList.Add(gameObject);
+            return mObjectList.Count.ToString();
         }
     }
 }

@@ -47,12 +47,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Engine\Camera.cs" />
+    <Compile Include="Engine\GameObject.cs" />
     <Compile Include="Engine\Mathf\MathUtil.cs" />
     <Compile Include="Engine\Mathf\Matrix.cs" />
     <Compile Include="Engine\Mathf\Plane.cs" />
     <Compile Include="Engine\Mathf\ParmLine.cs" />
     <Compile Include="Engine\Mathf\Vector.cs" />
     <Compile Include="Engine\Mathf\Vextex.cs" />
+    <Compile Include="Engine\SceneManager.cs" />
     <Compile Include="Engine\Transform.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>

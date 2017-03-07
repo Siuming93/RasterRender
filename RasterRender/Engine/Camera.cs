@@ -10,8 +10,7 @@ namespace RasterRender.Engine
         public int state;           //相机状态
         public int attr;            //相机属性
 
-        public Vector4 position;    //
-        相机位置
+        public Vector4 position;    //相机位置
 
         public Vector4 direction;   //欧拉角度或者UVN相机模型的方向
 
@@ -212,7 +211,7 @@ namespace RasterRender.Engine
             mcam = mt_inv*mt_uvn;
         }
 
-        public ConverseToLocale()
+        //public ConverseToLocale()
     }
 }
 //{
