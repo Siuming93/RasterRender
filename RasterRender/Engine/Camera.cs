@@ -185,7 +185,15 @@ namespace RasterRender.Engine
             this.mcam = mt_inv * mrot;
         }
 
-        private void BuildMcamMatrixUVN()
+        public void BuildMcamMatrixUVN(Vector4 position,Vector4 eye, Vector4 up)
+        {
+            this.position = position;
+            this.eye = eye;
+            this.up = up;
+            BuildMcamMatrixUVN();
+        }
+
+        public void BuildMcamMatrixUVN()
         {
             //这个函数根绝注视向量eye,上向量v和右向量u创建一个相机变换矩阵
             //并将这个存储到相机对象中,这些值都是从相机对象中提取的
@@ -257,10 +265,14 @@ namespace RasterRender.Engine
             List<Vector3> t_verts = new List<Vector3>();
             foreach(var vert in verts)
             {
-                t_verts.Add(vert * this.mcam);
+                var t_v = vert * this.mcam;
+                t_v = 1/t_v.z*t_v;
+                t_v.x += 1;
+                t_v.y += 1;
+                t_verts.Add((viewport_width-1)/2*t_v);
             }
 
-            for(int i=0;i<triangles.Count;i+=3)
+            for (int i = 0; i < triangles.Count; i += 3)
             {
                 DrawWire(t_verts[triangles[i]], t_verts[triangles[i + 1]]);
                 DrawWire(t_verts[triangles[i + 1]], t_verts[triangles[i + 2]]);
@@ -276,10 +288,12 @@ namespace RasterRender.Engine
                 a = b;
                 b = t;
             }
-            int startX = (int)(a.x + 0.5f);
-            int startY = (int)(a.x + 0.5f);
-            int endX = (int)(b.x + 0.5f);
-            int endY = (int)(b.x + 0.5f);
+            int startX = (int)MathUtil.Clamp( (a.x + 0.5f),0,viewport_width);
+            int startY = (int)MathUtil.Clamp((a.y + 0.5f), 0, viewport_width);
+            int endX = (int)MathUtil.Clamp((b.x + 0.5f), 0, viewport_width);
+            int endY = (int)MathUtil.Clamp((b.y + 0.5f), 0, viewport_width);
+
+
 
             int dx = endX - startX;
             int dy = endY - startY;
@@ -291,11 +305,18 @@ namespace RasterRender.Engine
             {
                 wireFrameBuffer[i,j]=true;
                 d += dy;
-                while (d > dx)
+                while (Math.Abs(d) > dx )
                 {
-                    j++;
-                    wireFrameBuffer[i, j] = true;
-                    d -= dx;
+                    j += stepY;
+                    if (j >= startY && j < endY || j <= startY && j >= endY)
+                    {
+                        wireFrameBuffer[i, j] = true;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    d -= stepY*dx;
                 }
             }
         }

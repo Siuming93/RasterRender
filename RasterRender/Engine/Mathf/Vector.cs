@@ -50,6 +50,11 @@ namespace RasterRender.Engine.Mathf
             return new Vector3(this.x * length_inv, this.y * length_inv, this.z * length_inv);
         }
 
+        public static Vector3 operator *(float f, Vector3 v)
+        {
+            return new Vector3(v.x * f, v.y * f, v.z * f);
+        }
+
         public static Vector3 zero = new Vector3();
     }
 
@@ -82,7 +87,7 @@ namespace RasterRender.Engine.Mathf
 
         public static Vector4 operator *(Vector4 a, Vector4 b)
         {
-            return new Vector4(b.z*a.y - a.z*b.y, a.z*b.x-a.x*b.z, b.z - a.z, 1.0f);
+            return new Vector4(b.z*a.y - a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y - b.x*a.y, 1.0f);
         }
     }
 }
