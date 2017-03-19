@@ -1,5 +1,6 @@
 
 using System;
+using System.Collections.Generic;
 using RasterRender.Engine.Mathf;
 
 namespace RasterRender.Engine
@@ -54,6 +55,9 @@ namespace RasterRender.Engine
         Matrix4x4 mper;             //用于存储相机坐标到透视坐标变换矩阵
         Matrix4x4 mscr;             //用于存储透视坐标到屏幕坐标变换矩阵
 
+        public bool[,] wireFrameBuffer;
+
+
         /// <summary>
         /// 这个函数初始化相机对象
         /// </summary>
@@ -86,6 +90,7 @@ namespace RasterRender.Engine
 
             this.viewport_width = width;
             this.viewport_Height = height;
+            wireFrameBuffer = new bool[(int)width, (int)height];
 
             this.viewport_center_x = (width - 1)/2;
             this.viewport_center_y = (height - 1)/2;
@@ -228,10 +233,70 @@ namespace RasterRender.Engine
             {
                 //使用相机对象中的矩阵mcam对定点进行变换
                 Vector4 result;     //用于存储每次变换的记过
-                result = gameObject.vlist_trans[i] * this.mcam;
+                result = gameObject.vlist_trans[vertex] * this.mcam;
 
-                gameObject.vlist_trans[i] = result;
+                gameObject.vlist_trans[vertex] = result;
 
+            }
+        }
+
+        public void World_To_Camera(List<Polygon> rend_list)
+        {
+            //这个函数基于矩阵的
+            //它根据传入的相机变换矩阵将渲染列表中没个多边形变换为相机坐标
+            //如果在流水线上游已经将每个物体转化为多边形
+            //并将它们插入到渲染类表中
+            //将使用这个函数,而不是基于物体的函数对顶点进行变换
+            //将物体转换为多边形的操作实在物体剔除,局部变换,局部坐标到世界坐标变换以及背面剔除之后进行的
+            //
+        }
+
+
+        public void DrawWireFrame(List<Vector3> verts, List<int> triangles)
+        {
+            List<Vector3> t_verts = new List<Vector3>();
+            foreach(var vert in verts)
+            {
+                t_verts.Add(vert * this.mcam);
+            }
+
+            for(int i=0;i<triangles.Count;i+=3)
+            {
+                DrawWire(t_verts[triangles[i]], t_verts[triangles[i + 1]]);
+                DrawWire(t_verts[triangles[i + 1]], t_verts[triangles[i + 2]]);
+                DrawWire(t_verts[triangles[i + 2]], t_verts[triangles[i]]);
+            }
+        }
+
+        private void DrawWire(Vector2 a,Vector2 b)
+        {
+            Vector2 t = a;
+            if (a.x > b.x)
+            {
+                a = b;
+                b = t;
+            }
+            int startX = (int)(a.x + 0.5f);
+            int startY = (int)(a.x + 0.5f);
+            int endX = (int)(b.x + 0.5f);
+            int endY = (int)(b.x + 0.5f);
+
+            int dx = endX - startX;
+            int dy = endY - startY;
+            int stepY = dy > 0 ? 1 : -1;
+
+            int j = startY;
+            int d=0;
+            for (int i = startX; i <= endX; i++)
+            {
+                wireFrameBuffer[i,j]=true;
+                d += dy;
+                while (d > dx)
+                {
+                    j++;
+                    wireFrameBuffer[i, j] = true;
+                    d -= dx;
+                }
             }
         }
     }

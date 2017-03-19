@@ -16,6 +16,11 @@ namespace RasterRender.Engine.Mathf
             this.x = x;
             this.y = y;
         }
+
+        public static implicit operator Vector2(Vector3 v)
+        {
+            return new Vector2(v.x, v.y);
+        }
     }
 
     public struct Vector3

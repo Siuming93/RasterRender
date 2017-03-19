@@ -248,5 +248,11 @@ namespace RasterRender.Engine.Mathf
                 w = v.x * matrix.m03 + v.y * matrix.m13 + v.z * matrix.m23 + v.w * matrix.m33,
             };
         }
+
+        public static Vector3 operator *(Vector3 v, Matrix4x4 matrix)
+        {
+            Vector4 v4=new Vector4(v.x, v.y, v.z, 1) * matrix;
+            return new Vector3(v4.x, v4.y, v4.z);
+        }
     }
 }
