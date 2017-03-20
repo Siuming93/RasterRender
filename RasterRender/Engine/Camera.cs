@@ -262,6 +262,13 @@ namespace RasterRender.Engine
 
         public void DrawWireFrame(List<Vector3> verts, List<int> triangles)
         {
+            for (int i = 0; i < viewport_width; i++)
+            {
+                for (int j = 0; j < viewport_width; j++)
+                {
+                    wireFrameBuffer[i, j] = false;
+                }
+            }
             List<Vector3> t_verts = new List<Vector3>();
             foreach(var vert in verts)
             {

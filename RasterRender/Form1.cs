@@ -69,17 +69,28 @@ namespace RasterRender
                 {
                     return;
                 }
+                CamreaMove();
                 _camera.DrawWireFrame(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
+                //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, new List<int>() { 0,1,2,1,2,3,0,4,5,});
+               
                 for (int i = 0; i < width; i++)
                 {
                     for (int j = 0; j < height; j++)
                     {
-                        bitmap.SetPixel(i, j, _camera.wireFrameBuffer[i, j] ? Color.White : Color.Black);
+                        bitmap.SetPixel(i, height-1-j, _camera.wireFrameBuffer[i, j] ? Color.White : Color.Black);
                     }
                 }
                 _canvas.DrawImage(bitmap, new Point(0, 0));
 
             }
+        }
+        
+        private void CamreaMove()
+        {
+            index++;
+            _camera.position = new Vector4(0, 1 + index % 10 * 0.1f, -5 + index % 20 * 0.025f);
+            _camera.up = new Vector4(0, 1, 0, 1);
+            _camera.BuildMcamMatrixUVN();
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
