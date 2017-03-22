@@ -21,6 +21,22 @@ namespace RasterRender.Engine.Mathf
         {
             return new Vector2(v.x, v.y);
         }
+
+        public static Vector2 operator *(float f,Vector2 v)
+        {
+            return new Vector2(f * v.x, f * v.y);
+        }
+
+        public static Vector2 operator +(Vector2 v1, Vector2 v2)
+        {
+            return new Vector2(v1.x + v2.x, v2.y + v1.y);
+        }
+
+        public static Vector2 Lerp(Vector2 a, Vector2 b, float t)
+        {
+            return new Vector2(MathUtil.Lerp(a.x, b.x, t), MathUtil.Lerp(a.y, b.y, t));
+        }
+
     }
 
     public struct Vector3
@@ -53,6 +69,11 @@ namespace RasterRender.Engine.Mathf
         public static Vector3 operator *(float f, Vector3 v)
         {
             return new Vector3(v.x * f, v.y * f, v.z * f);
+        }
+
+        public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
+        {
+            return new Vector3(MathUtil.Lerp(a.x, b.x, t), MathUtil.Lerp(a.y, b.y, t), MathUtil.Lerp(a.z, b.z, t));
         }
 
         public static Vector3 zero = new Vector3();

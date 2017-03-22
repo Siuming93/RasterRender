@@ -57,6 +57,9 @@ namespace RasterRender.Engine
 
         public bool[,] wireFrameBuffer;
 
+        public float[,] zBuffer;
+        public int[,] colorBuffer;
+
 
         /// <summary>
         /// 这个函数初始化相机对象
@@ -91,11 +94,13 @@ namespace RasterRender.Engine
             this.viewport_width = width;
             this.viewport_Height = height;
             wireFrameBuffer = new bool[(int)width, (int)height];
+            colorBuffer = new int[(int)width, (int)height];
+            zBuffer = new float[(int)width, (int)height];
 
-            this.viewport_center_x = (width - 1)/2;
-            this.viewport_center_y = (height - 1)/2;
+            this.viewport_center_x = (width - 1) / 2;
+            this.viewport_center_y = (height - 1) / 2;
 
-            this.aspect_ratio = (float) width/height;
+            this.aspect_ratio = (float)width / height;
 
             //将所有矩阵都设为单位矩阵
             mcam = Matrix4x4.identity;
@@ -110,7 +115,7 @@ namespace RasterRender.Engine
             //根据fov和视平面大小计算视距
             float tan_fov_div2 = (float)Math.Tan(fov / 360f);
 
-            this.view_dist_w = 0.5f*this.viewplane_width*tan_fov_div2;
+            this.view_dist_w = 0.5f * this.viewplane_width * tan_fov_div2;
 
             //建立裁剪面  所有面都过原点 所以只需要计算法向量即可   
             //右裁剪面计算 (tan_fov_div2, 0, 1)为右裁剪面上一点,向量(-1, 0, tan_fov_div2)与其垂直,它的单位向量可以作为法向量.
@@ -179,13 +184,13 @@ namespace RasterRender.Engine
                 0, 0, 0, 1);
 
             //旋转顺序为XYZ
-            mrot = mx_inv*my_inv*mz_inv;
+            mrot = mx_inv * my_inv * mz_inv;
 
             //将其乘以逆平移矩阵,并将结果存储到相机对象的相机变换矩阵中
             this.mcam = mt_inv * mrot;
         }
 
-        public void BuildMcamMatrixUVN(Vector4 position,Vector4 eye, Vector4 up)
+        public void BuildMcamMatrixUVN(Vector4 position, Vector4 eye, Vector4 up)
         {
             this.position = position;
             this.eye = eye;
@@ -221,7 +226,7 @@ namespace RasterRender.Engine
                 0, 0, 0, 1);
 
             //将平移矩阵乘以uvn矩阵,并将结果存储到相机变换矩阵中
-            mcam = mt_inv*mt_uvn;
+            mcam = mt_inv * mt_uvn;
         }
 
         //public ConverseToLocale(
@@ -237,7 +242,7 @@ namespace RasterRender.Engine
             //这里假设顶点已经被变换为了世界坐标
             //且结果存储在vlist_trans[]中
 
-            for(int vertex = 0; vertex < gameObject.num_verteices; vertex++ )
+            for (int vertex = 0; vertex < gameObject.num_verteices; vertex++)
             {
                 //使用相机对象中的矩阵mcam对定点进行变换
                 Vector4 result;     //用于存储每次变换的记过
@@ -260,6 +265,77 @@ namespace RasterRender.Engine
         }
 
 
+        public void DrawPritives(List<Vector3> verts, List<int> triangles, List<Vector3> uvs)
+        {
+            //将所有坐标准换为屏幕坐标先
+            List<Vector3> t_verts = new List<Vector3>();
+            foreach (var vert in verts)
+            {
+                var t_v = vert * this.mcam;
+                t_v = 1 / t_v.z * t_v;
+                t_v.x = ((1 + t_v.x) / 2 * (viewport_width - 1) + 0.5f);
+                t_v.y = ((1 + t_v.y) / 2 * (viewport_Height - 1) + 0.5f);
+                t_verts.Add(t_v);
+            }
+        }
+
+        /// <summary>
+        /// 讲道理的话这里已经是屏幕坐标了
+        /// </summary>
+        /// <param name="verts"></param>
+        /// <param name="uvs"></param>
+        /// <param name="index1"></param>
+        /// <param name="index2"></param>
+        /// <param name="index3"></param>
+        private void DrawPrimitive(List<Vector3> verts, List<Vector2> uvs, int index1, int index2, int index3)
+        {
+            Vector3 v1 = verts[index1], v2 = verts[index2], v3 = verts[index3];
+            Vector2 uv1 = uvs[index1], uv2 = uvs[index2], uv3 = uvs[index3];
+
+            if (v1.x > v2.x) { Vector3 t = v1; v1 = v2; v2 = t; }
+            if (v1.x > v3.x) { Vector3 t = v1; v1 = v3; v3 = t; }
+            if (v2.x > v3.x) { Vector3 t = v2; v2 = v3; v3 = t; }
+
+
+            if(v1.x==v2.x&&v1.x==v3.x||
+                v1.y==v2.y&&v1.y==v3.y)
+            {
+                //线
+            }
+
+            if(v1.y==v2.y)
+            {
+                for(float i=v1.y;i<v3.y;i++)
+                {
+                    float t=i/(v3.y-v1.y);
+                    var line = new ScanLine() { v1 = Vector3.Lerp(v1, v3, t), v2 = Vector3.Lerp(v2, v3, t), uv1 = Vector2.Lerp(uv1, uv3, t), uv2 = Vector2.Lerp(uv2, uv3, t) };
+                }
+            }
+
+        }
+
+        private void DrawScanLine(ScanLine line)
+        {
+            int startX = (int)line.v1.x;
+            int endX = (int)line.v2.x;
+            int y = (int)line.v1.y;
+
+            for (int i = startX; i <= endX; i++)
+            {
+                if (zBuffer[i, y] < line.v1.z + i * line.vStep.z)
+                {
+                    zBuffer[i, y] = line.v1.z + i * line.vStep.z;
+                    var uv = line.uv1 + i * line.uvStep;
+                    colorBuffer[i, y] = GetColorInt(uv.x, uv.y);
+                }
+            }
+        }
+
+        public int GetColorInt(float x, float y)
+        {
+            return 0;
+        }
+
         public void DrawWireFrame(List<Vector3> verts, List<int> triangles)
         {
             for (int i = 0; i < viewport_width; i++)
@@ -270,13 +346,13 @@ namespace RasterRender.Engine
                 }
             }
             List<Vector3> t_verts = new List<Vector3>();
-            foreach(var vert in verts)
+            foreach (var vert in verts)
             {
                 var t_v = vert * this.mcam;
-                t_v = 1/t_v.z*t_v;
+                t_v = 1 / t_v.z * t_v;
                 t_v.x += 1;
                 t_v.y += 1;
-                t_verts.Add((viewport_width-1)/2*t_v);
+                t_verts.Add((viewport_width - 1) / 2 * t_v);
             }
 
             for (int i = 0; i < triangles.Count; i += 3)
@@ -287,7 +363,7 @@ namespace RasterRender.Engine
             }
         }
 
-        private void DrawWire(Vector2 a,Vector2 b)
+        private void DrawWire(Vector2 a, Vector2 b)
         {
             Vector2 t = a;
             if (a.x > b.x)
@@ -295,7 +371,7 @@ namespace RasterRender.Engine
                 a = b;
                 b = t;
             }
-            int startX = (int)MathUtil.Clamp( (a.x + 0.5f),0,viewport_width);
+            int startX = (int)MathUtil.Clamp((a.x + 0.5f), 0, viewport_width);
             int startY = (int)MathUtil.Clamp((a.y + 0.5f), 0, viewport_width);
             int endX = (int)MathUtil.Clamp((b.x + 0.5f), 0, viewport_width);
             int endY = (int)MathUtil.Clamp((b.y + 0.5f), 0, viewport_width);
@@ -307,12 +383,12 @@ namespace RasterRender.Engine
             int stepY = dy > 0 ? 1 : -1;
 
             int j = startY;
-            int d=0;
+            int d = 0;
             for (int i = startX; i <= endX; i++)
             {
-                wireFrameBuffer[i,j]=true;
+                wireFrameBuffer[i, j] = true;
                 d += dy;
-                while (Math.Abs(d) > dx )
+                while (Math.Abs(d) > dx)
                 {
                     j += stepY;
                     if (j >= startY && j < endY || j <= startY && j >= endY)
@@ -323,9 +399,15 @@ namespace RasterRender.Engine
                     {
                         break;
                     }
-                    d -= stepY*dx;
+                    d -= stepY * dx;
                 }
             }
+        }
+
+        struct ScanLine
+        {
+            public Vector3 v1, v2, vStep;
+            public Vector2 uv1, uv2, uvStep;
         }
     }
 }

@@ -84,11 +84,17 @@ namespace RasterRender
 
             }
         }
-        
+
+        int dir;
+        float y = -2;
+        float z = -5;
         private void CamreaMove()
         {
             index++;
-            _camera.position = new Vector4(0, 1 + index % 10 * 0.1f, -5 + index % 20 * 0.025f);
+            dir = (int)Math.Pow(-1, (int)index / 30);
+            y+=dir * 0.1f;
+            z += dir * 0.025f;
+            _camera.position = new Vector4(0, y, z /*+ dir*index % 10 * 0.025f*/);
             _camera.up = new Vector4(0, 1, 0, 1);
             _camera.BuildMcamMatrixUVN();
         }

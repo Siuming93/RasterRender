@@ -17,5 +17,11 @@ namespace RasterRender.Const
             0,1,2, 1,2,3, 0,1,5, 0,4,5, 0,2,4, 2,4,6, 2,3,7, 2,6,7, 4,5,6, 5,6,7, 1,3,7, 1,5,7,
         };
 
+        public static List<Vector2> CubeUVs = new List<Vector2>()
+        {
+            new Vector2(1,1),new Vector2(0,1),new Vector2(1,0),new Vector2(0,0),
+            new Vector2(1,1),new Vector2(0,1),new Vector2(1,0),new Vector2(0,0),
+        };
+
     }
 }
