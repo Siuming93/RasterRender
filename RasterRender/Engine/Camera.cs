@@ -292,26 +292,48 @@ namespace RasterRender.Engine
             Vector3 v1 = verts[index1], v2 = verts[index2], v3 = verts[index3];
             Vector2 uv1 = uvs[index1], uv2 = uvs[index2], uv3 = uvs[index3];
 
-            if (v1.x > v2.x) { Vector3 t = v1; v1 = v2; v2 = t; }
-            if (v1.x > v3.x) { Vector3 t = v1; v1 = v3; v3 = t; }
-            if (v2.x > v3.x) { Vector3 t = v2; v2 = v3; v3 = t; }
+            if (v1.y < v2.y) { Vector3 t = v1; v1 = v2; v2 = t; }
+            if (v1.y < v3.y) { Vector3 t = v1; v1 = v3; v3 = t; }
+            if (v2.y < v3.y) { Vector3 t = v2; v2 = v3; v3 = t; }
 
 
-            if(v1.x==v2.x&&v1.x==v3.x||
-                v1.y==v2.y&&v1.y==v3.y)
+            if (v1.x == v2.x && v1.x == v3.x ||
+                v1.y == v2.y && v1.y == v3.y)
             {
                 //线
             }
 
-            if(v1.y==v2.y)
+            float top, bottom; ;
+
+            if (v1.y == v2.y || v2.y == v3.y || v1.y == v3.y)
             {
-                for(float i=v1.y;i<v3.y;i++)
+                top = Math.Max(v1.y, Math.Max(v2.y, v3.y));
+                bottom = Math.Min(v1.y, Math.Min(v2.y, v3.y));
+                for (float i = bottom; i < top; i++)
                 {
-                    float t=i/(v3.y-v1.y);
+                    float t = i / (top - bottom);
                     var line = new ScanLine() { v1 = Vector3.Lerp(v1, v3, t), v2 = Vector3.Lerp(v2, v3, t), uv1 = Vector2.Lerp(uv1, uv3, t), uv2 = Vector2.Lerp(uv2, uv3, t) };
                 }
             }
 
+        }
+
+        private void DrawBottomTriangle(Vector3 v1, Vector3 v2, Vector3 v3)
+        {
+            float top = v1.y;
+            float bottom = v2.y;
+
+            if(v2.x>v3.x){Vector3 t=v2;v2=v3;v3=t;}
+
+            float leftDx = (v1.x - v2.x) / (v1.y - v2.y);
+            float rightDx = (v1.x - v3.x) / (v1.y - v3.y);
+
+            int count=0;
+            for(float i=bottom;i<top;i++)
+            {
+                var line=new ScanLine(){v1=new Vector3(v2.x+count*leftDx,i,0),v2=new Vector3(v3.x+count*rightDx,i,0)};
+                DrawScanLine(line);
+            }
         }
 
         private void DrawScanLine(ScanLine line)
@@ -333,7 +355,7 @@ namespace RasterRender.Engine
 
         public int GetColorInt(float x, float y)
         {
-            return 0;
+            return 255 << 24 + 255 << 16 + 255 << 8 + 255;
         }
 
         public void DrawWireFrame(List<Vector3> verts, List<int> triangles)
