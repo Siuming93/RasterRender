@@ -59,7 +59,7 @@ namespace RasterRender
         private object lockObj = new object();
         private int index;
         private Bitmap bitmap = new Bitmap(width, height);
-        private const int width = 400, height = 400;
+        private const int width = 100, height =100;
         private void Tick(object sender, ElapsedEventArgs e)
         {
             lock (lockObj)
@@ -69,19 +69,42 @@ namespace RasterRender
                 {
                     return;
                 }
-                CamreaMove();
-                _camera.DrawWireFrame(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
-                //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, new List<int>() { 0,1,2,1,2,3,0,4,5,});
+                //CamreaMove();
+                //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
+                //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles, PrimitiveConst.CubeUVs);
+                _camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() { 4, 5, 6, 1, 2, 3, }, PrimitiveConst.CubeUVs);
+                //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, new List<int>() { 4,5,6,1,2,3,});
                
-                for (int i = 0; i < width; i++)
-                {
-                    for (int j = 0; j < height; j++)
-                    {
-                        bitmap.SetPixel(i, height-1-j, _camera.wireFrameBuffer[i, j] ? Color.White : Color.Black);
-                    }
-                }
-                _canvas.DrawImage(bitmap, new Point(0, 0));
+                DrawRenderTexture();
+               // DrawWireFrame();
 
+                if (_canvas != null && !_canvas.IsVisibleClipEmpty)
+                {
+                    _canvas.DrawImage(bitmap, new Point(0, 0));
+                }
+            }
+        }
+
+        private void DrawRenderTexture()
+        {
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    bitmap.SetPixel(i, height - 1 - j, _camera.colorBuffer[i, j]);
+                }
+            }
+        }
+
+        private void DrawWireFrame()
+        {
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    var originClor = bitmap.GetPixel(i, height - 1 - j);
+                    bitmap.SetPixel(i, height - 1 - j, _camera.wireFrameBuffer[i, j] ? Color.Green : originClor);
+                }
             }
         }
 

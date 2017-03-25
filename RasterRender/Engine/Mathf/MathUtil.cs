@@ -51,5 +51,10 @@ namespace RasterRender.Engine.Mathf
 
             return _sin[index % 360];
         }
+
+        public static int Round(float a)
+        {
+            return (int) (a + 0.5f);
+        }
     }
 }

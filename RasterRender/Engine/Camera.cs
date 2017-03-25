@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using RasterRender.Engine.Mathf;
 
 namespace RasterRender.Engine
@@ -58,7 +59,7 @@ namespace RasterRender.Engine
         public bool[,] wireFrameBuffer;
 
         public float[,] zBuffer;
-        public int[,] colorBuffer;
+        public Color[,] colorBuffer;
 
 
         /// <summary>
@@ -94,7 +95,7 @@ namespace RasterRender.Engine
             this.viewport_width = width;
             this.viewport_Height = height;
             wireFrameBuffer = new bool[(int)width, (int)height];
-            colorBuffer = new int[(int)width, (int)height];
+            colorBuffer = new Color[(int)width, (int)height];
             zBuffer = new float[(int)width, (int)height];
 
             this.viewport_center_x = (width - 1) / 2;
@@ -265,8 +266,16 @@ namespace RasterRender.Engine
         }
 
 
-        public void DrawPritives(List<Vector3> verts, List<int> triangles, List<Vector3> uvs)
+        public void DrawPrimitives(List<Vector3> verts, List<int> triangles, List<Vector2> uvs)
         {
+            for (int i = 0; i < viewport_width; i++)
+            {
+                for (int j = 0; j < viewport_width; j++)
+                {
+                    colorBuffer[i,j]=Color.Black;
+                    zBuffer[i, j] = float.MaxValue;
+                }
+            }
             //将所有坐标准换为屏幕坐标先
             List<Vector3> t_verts = new List<Vector3>();
             foreach (var vert in verts)
@@ -277,85 +286,131 @@ namespace RasterRender.Engine
                 t_v.y = ((1 + t_v.y) / 2 * (viewport_Height - 1) + 0.5f);
                 t_verts.Add(t_v);
             }
+
+            for (int i = 0; i < triangles.Count; i++)
+            {
+                DrawPrimitive(t_verts, triangles[i], triangles[++i], triangles[++i]);
+            }
         }
 
         /// <summary>
-        /// 讲道理的话这里已经是屏幕坐标了
+        ///按照y坐标由大到小的方式逐行渲染,讲道理的话传入这里的坐标应该已经是屏幕坐标了
         /// </summary>
         /// <param name="verts"></param>
         /// <param name="uvs"></param>
         /// <param name="index1"></param>
         /// <param name="index2"></param>
         /// <param name="index3"></param>
-        private void DrawPrimitive(List<Vector3> verts, List<Vector2> uvs, int index1, int index2, int index3)
+        private void DrawPrimitive(List<Vector3> verts, int index1, int index2, int index3)
         {
             Vector3 v1 = verts[index1], v2 = verts[index2], v3 = verts[index3];
-            Vector2 uv1 = uvs[index1], uv2 = uvs[index2], uv3 = uvs[index3];
 
+            //todo 暂时不考率uv
             if (v1.y < v2.y) { Vector3 t = v1; v1 = v2; v2 = t; }
             if (v1.y < v3.y) { Vector3 t = v1; v1 = v3; v3 = t; }
             if (v2.y < v3.y) { Vector3 t = v2; v2 = v3; v3 = t; }
 
 
-            if (v1.x == v2.x && v1.x == v3.x ||
-                v1.y == v2.y && v1.y == v3.y)
+            if (FloatNear(v1.y, v2.y) && FloatNear(v3.y, v2.y) ||
+                FloatNear(v1.x, v2.x) && FloatNear(v1.x, v3.x))
             {
-                //线
+                //线 不画
             }
 
-            float top, bottom; ;
-
-            if (v1.y == v2.y || v2.y == v3.y || v1.y == v3.y)
+            if (FloatNear(v1.y, v2.y))
             {
-                top = Math.Max(v1.y, Math.Max(v2.y, v3.y));
-                bottom = Math.Min(v1.y, Math.Min(v2.y, v3.y));
-                for (float i = bottom; i < top; i++)
-                {
-                    float t = i / (top - bottom);
-                    var line = new ScanLine() { v1 = Vector3.Lerp(v1, v3, t), v2 = Vector3.Lerp(v2, v3, t), uv1 = Vector2.Lerp(uv1, uv3, t), uv2 = Vector2.Lerp(uv2, uv3, t) };
-                }
+                DrawBottomTriangle(v1, v2, v3);
+            }
+            else if (FloatNear(v3.y, v2.y))
+            {
+                DrawTopTriangle(v1, v2, v3);
+            }
+            else
+            {
+                //分成两个三角形 所以要计算 线段[left,v3]与直线y=right.y的交点
+                Vector3 v4 = Vector3.Lerp(v1, v3, (v2.y-v1.y)/(v3.y - v1.y));
+                DrawTopTriangle(v1, v2, v4);
+                DrawBottomTriangle(v2, v4, v3);
             }
 
         }
 
+        private bool FloatNear(float a, float b)
+        {
+            return (int) (a + 0.5f) == (int) (b + 0.5f);
+        }
+
+        /// <summary>
+        /// 顶点在上
+        /// </summary>
+        /// <param name="v1"></param>
+        /// <param name="v2"></param>
+        /// <param name="v3"></param>
         private void DrawBottomTriangle(Vector3 v1, Vector3 v2, Vector3 v3)
         {
-            float top = v1.y;
-            float bottom = v2.y;
-
-            if(v2.x>v3.x){Vector3 t=v2;v2=v3;v3=t;}
-
-            float leftDx = (v1.x - v2.x) / (v1.y - v2.y);
-            float rightDx = (v1.x - v3.x) / (v1.y - v3.y);
-
-            int count=0;
-            for(float i=bottom;i<top;i++)
+            if (v1.x > v2.x)
             {
-                var line=new ScanLine(){v1=new Vector3(v2.x+count*leftDx,i,0),v2=new Vector3(v3.x+count*rightDx,i,0)};
+                var t = v1;
+                v1 = v2;
+                v2 = t;
+            }
+
+            float top = v1.y;
+            float bottom = v3.y;
+
+            int count = 0;
+            for (float i = bottom; i < top; i++)
+            {
+                float t = (i - bottom)/(top - bottom);
+                var line = new ScanLine() { left = Vector3.Lerp(v3, v1, t), right = Vector3.Lerp(v3, v2, t) };
                 DrawScanLine(line);
+                count++;
+            }
+        }
+
+        private void DrawTopTriangle(Vector3 v1, Vector3 v2, Vector3 v3)
+        {
+            if (v2.x > v3.x) { Vector3 t = v2; v2 = v3; v3 = t; }
+
+            float top = v1.y;
+            float bottom = v3.y;
+
+            int count = 0;
+            for (float i = bottom; i < top; i++)
+            {
+                float t = (i - bottom) / (top - bottom);
+                var line = new ScanLine() { left = Vector3.Lerp(v2, v1, t), right = Vector3.Lerp(v3, v1, t) };
+                DrawScanLine(line);
+                count++;
             }
         }
 
         private void DrawScanLine(ScanLine line)
         {
-            int startX = (int)line.v1.x;
-            int endX = (int)line.v2.x;
-            int y = (int)line.v1.y;
+            int startX = MathUtil.Round(line.left.x);
+            int endX = MathUtil.Round(line.right.x);
+            int y = MathUtil.Round(line.left.y);
+
+            Vector3 step = Vector3.Lerp(line.left, line.right, 1 / (line.left.x - line.right.x));
 
             for (int i = startX; i <= endX; i++)
             {
-                if (zBuffer[i, y] < line.v1.z + i * line.vStep.z)
+                if (zBuffer[i, y] >= line.left.z + i * step.z)
                 {
-                    zBuffer[i, y] = line.v1.z + i * line.vStep.z;
                     var uv = line.uv1 + i * line.uvStep;
-                    colorBuffer[i, y] = GetColorInt(uv.x, uv.y);
+                    colorBuffer[i, y] = GetColorInt(0, 0);
+                    if(i==startX||i==endX)
+                        colorBuffer[i, y] = Color.Aqua;
+                    zBuffer[i, y] = line.left.z + i * step.z;
+
+
                 }
             }
         }
 
-        public int GetColorInt(float x, float y)
+        public Color GetColorInt(float x, float y)
         {
-            return 255 << 24 + 255 << 16 + 255 << 8 + 255;
+            return Color.DarkGray;
         }
 
         public void DrawWireFrame(List<Vector3> verts, List<int> triangles)
@@ -428,7 +483,7 @@ namespace RasterRender.Engine
 
         struct ScanLine
         {
-            public Vector3 v1, v2, vStep;
+            public Vector3 left, right, vStep;
             public Vector2 uv1, uv2, uvStep;
         }
     }
