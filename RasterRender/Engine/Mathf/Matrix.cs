@@ -249,10 +249,10 @@ namespace RasterRender.Engine.Mathf
             };
         }
 
-        public static Vector3 operator *(Vector3 v, Matrix4x4 matrix)
+        public static Vector4 operator *(Vector3 v, Matrix4x4 matrix)
         {
             Vector4 v4=new Vector4(v.x, v.y, v.z, 1) * matrix;
-            return new Vector3(v4.x, v4.y, v4.z);
+            return new Vector4(v4.x, v4.y, v4.z);
         }
     }
 }

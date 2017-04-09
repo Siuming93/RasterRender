@@ -39,9 +39,7 @@ namespace RasterRender
         private void InitCamera()
         {
             _camera = new Camera();
-            _camera.Init(0, new Vector4(0, 1f, -5, 1), new Vector4(0, 0, 1, 1), new Vector4(0, 0, 1, 1), 0.1f, 5f, 90f, width, height);
-            _camera.up = new Vector4(0, 1, 0, 1);
-            _camera.BuildMcamMatrixUVN();
+            _camera.Init(0, new Vector4(0, 0f, 5, 1), new Vector4(0, 0, -1, 1), new Vector4(0, 1, 0, 1), 0.1f, 50f, 90f, width, height);
         }
 
         private void StartLoop()
@@ -59,7 +57,7 @@ namespace RasterRender
         private object lockObj = new object();
         private int index;
         private Bitmap bitmap = new Bitmap(width, height);
-        private const int width = 100, height =100;
+        private const int width = 400, height = 600;
         private void Tick(object sender, ElapsedEventArgs e)
         {
             lock (lockObj)
@@ -69,14 +67,15 @@ namespace RasterRender
                 {
                     return;
                 }
-                //CamreaMove();
+                CamreaMove();
                 //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
-                //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles, PrimitiveConst.CubeUVs);
-                _camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() { 4, 5, 6, 1, 2, 3, }, PrimitiveConst.CubeUVs);
+                _camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles, PrimitiveConst.CubeUVs);
+                //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() {  2, 7, 3, }, PrimitiveConst.CubeUVs);
+                //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() { 2, 4, 6, 2, 7, 3,  }, PrimitiveConst.CubeUVs);
                 //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, new List<int>() { 4,5,6,1,2,3,});
-               
+
                 DrawRenderTexture();
-               // DrawWireFrame();
+                 //DrawWireFrame();
 
                 if (_canvas != null && !_canvas.IsVisibleClipEmpty)
                 {
@@ -110,16 +109,14 @@ namespace RasterRender
 
         int dir;
         float y = -2;
-        float z = -5;
+        float z = 5;
         private void CamreaMove()
         {
             index++;
-            dir = (int)Math.Pow(-1, (int)index / 30);
-            y+=dir * 0.1f;
-            z += dir * 0.025f;
-            _camera.position = new Vector4(0, y, z /*+ dir*index % 10 * 0.025f*/);
-            _camera.up = new Vector4(0, 1, 0, 1);
-            _camera.BuildMcamMatrixUVN();
+            dir = (int)Math.Pow(-1, (int)index / 90);
+            y += dir * 0.1f;
+            //z += dir * 0.025f;
+            _camera.SetMcamMatrixUVN(new Vector4(0, y, z), new Vector4(0, 0, -1, 1), new Vector4(0, 1, 0, 1));
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -129,6 +126,11 @@ namespace RasterRender
                 _canvas = this.CreateGraphics();
                 _canvas.Clear(Color.Blue);
             }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            CamreaMove();
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)

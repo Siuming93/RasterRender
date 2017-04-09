@@ -22,7 +22,7 @@ namespace RasterRender.Engine.Mathf
             return new Vector2(v.x, v.y);
         }
 
-        public static Vector2 operator *(float f,Vector2 v)
+        public static Vector2 operator *(float f, Vector2 v)
         {
             return new Vector2(f * v.x, f * v.y);
         }
@@ -30,6 +30,11 @@ namespace RasterRender.Engine.Mathf
         public static Vector2 operator +(Vector2 v1, Vector2 v2)
         {
             return new Vector2(v1.x + v2.x, v2.y + v1.y);
+        }
+
+        public static Vector2 operator -(Vector2 v1, Vector2 v2)
+        {
+            return new Vector2(v1.x - v2.x, v1.y - v2.y);
         }
 
         public static Vector2 Lerp(Vector2 a, Vector2 b, float t)
@@ -71,9 +76,19 @@ namespace RasterRender.Engine.Mathf
             return new Vector3(v.x * f, v.y * f, v.z * f);
         }
 
+        public static Vector3 operator -(Vector3 a, Vector3 b)
+        {
+            return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+
         public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
         {
             return new Vector3(MathUtil.Lerp(a.x, b.x, t), MathUtil.Lerp(a.y, b.y, t), MathUtil.Lerp(a.z, b.z, t));
+        }
+
+        public static implicit operator Vector3(Vector4 v)
+        {
+            return new Vector3(v.x, v.y, v.z);
         }
 
         public static Vector3 zero = new Vector3();
@@ -108,7 +123,12 @@ namespace RasterRender.Engine.Mathf
 
         public static Vector4 operator *(Vector4 a, Vector4 b)
         {
-            return new Vector4(b.z*a.y - a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y - b.x*a.y, 1.0f);
+            return new Vector4(b.z * a.y - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - b.x * a.y, 1.0f);
+        }
+
+        public static Vector4 operator *(float f, Vector4 v)
+        {
+            return new Vector4(v.x * f, v.y * f, v.z * f, v.w * f);
         }
     }
 }
