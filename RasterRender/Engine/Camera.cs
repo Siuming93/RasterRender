@@ -142,7 +142,7 @@ namespace RasterRender.Engine
             mcam = mt_inv * mt_uvn;
         }
 
-        public void DrawPrimitives(List<Vector3> verts, List<int> triangles, List<Vector2> uvs)
+        public void DrawPrimitives(List<Vertex> verts, List<int> triangles)
         {
             for (int i = 0; i < viewport_width; i++)
             {
@@ -153,22 +153,22 @@ namespace RasterRender.Engine
                 }
             }
             //将所有坐标准换为屏幕坐标先
-            List<Vector3> t_verts = new List<Vector3>();
+            List<Vertex> t_verts = new List<Vertex>();
             foreach (var vert in verts)
             {
                 t_verts.Add(GetScreenPoint(vert));
             }
 
-            for (int i = 0; i < triangles.Count; i += 3)
+            for (int i = 0; i < triangles.Count; i++)
             {
-                DrawPrimitive(new Vertex() { pos = t_verts[triangles[i]], uv = uvs[triangles[i]] }, new Vertex() { pos = t_verts[triangles[i + 1]], uv = uvs[triangles[i + 1]] }, new Vertex() { pos = t_verts[triangles[i + 2]], uv = uvs[triangles[i + 2]] });
+                DrawPrimitive(t_verts[triangles[i]], t_verts[triangles[++i]], t_verts[triangles[++i]]);
             }
         }
 
-        public Vector3 GetScreenPoint(Vector3 v)
+        public Vertex GetScreenPoint(Vertex v)
         {
             //转换为本地坐标
-            Vector4 t_v = v * this.mcam;
+            Vector4 t_v = v.pos * this.mcam;
 
             //转换为视口坐标
             t_v = t_v * this.mper;
@@ -182,7 +182,8 @@ namespace RasterRender.Engine
             t_v.y *= t_v.w;
             t_v.w = 1.0f;
 
-            return t_v;
+            v.pos = t_v;
+            return v;
         }
 
         /// <summary>
@@ -252,7 +253,7 @@ namespace RasterRender.Engine
             if (v.z < 0.0f) check |= 1;
             if (v.z > far_clip_z) check |= 2;
             if (v.x < 0.0f) check |= 4;
-            if (v.x > viewport_Height) check |= 8;
+            if (v.x > viewport_width) check |= 8;
             if (v.y < 0.0f) check |= 16;
             if (v.y > viewport_Height) check |= 32;
             return check;
@@ -359,7 +360,7 @@ namespace RasterRender.Engine
         /// </summary>
         /// <param name="verts"></param>
         /// <param name="triangles"></param>
-        public void DrawWireFrame(List<Vector3> verts, List<int> triangles)
+        public void DrawWireFrame(List<Vertex> verts, List<int> triangles)
         {
             for (int i = 0; i < viewport_width; i++)
             {
@@ -368,7 +369,7 @@ namespace RasterRender.Engine
                     wireFrameBuffer[i, j] = false;
                 }
             }
-            List<Vector3> t_verts = new List<Vector3>();
+            List<Vertex> t_verts = new List<Vertex>();
             foreach (var vert in verts)
             {
                 t_verts.Add(GetScreenPoint(vert));
@@ -376,9 +377,9 @@ namespace RasterRender.Engine
 
             for (int i = 0; i < triangles.Count; i += 3)
             {
-                DrawWire(t_verts[triangles[i]], t_verts[triangles[i + 1]]);
-                DrawWire(t_verts[triangles[i + 1]], t_verts[triangles[i + 2]]);
-                DrawWire(t_verts[triangles[i + 2]], t_verts[triangles[i]]);
+                DrawWire(t_verts[triangles[i]].pos, t_verts[triangles[i + 1]].pos);
+                DrawWire(t_verts[triangles[i + 1]].pos, t_verts[triangles[i + 2]].pos);
+                DrawWire(t_verts[triangles[i + 2]].pos, t_verts[triangles[i]].pos);
             }
         }
 

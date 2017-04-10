@@ -34,7 +34,7 @@ namespace RasterRender
 
         private void InitGameObject()
         {
-            Scene.instance.AddGameObject(new GameObject() { verts = PrimitiveConst.CubeVertexs, triangles = PrimitiveConst.CubeTriangles });
+            //Scene.instance.AddGameObject(new GameObject() { verts = PrimitiveConst.CubeVertexs, triangles = PrimitiveConst.CubeTriangles });
         }
         private void InitCamera()
         {
@@ -69,7 +69,7 @@ namespace RasterRender
                 }
                 CamreaMove();
                 //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
-                _camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles, PrimitiveConst.CubeUVs);
+                _camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
                 //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() {  2, 7, 3, }, PrimitiveConst.CubeUVs);
                 //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() { 2, 4, 6, 2, 7, 3,  }, PrimitiveConst.CubeUVs);
                 //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, new List<int>() { 4,5,6,1,2,3,});
@@ -108,15 +108,18 @@ namespace RasterRender
         }
 
         int dir;
+        private float x = -2;
         float y = -2;
         float z = 5;
         private void CamreaMove()
         {
             index++;
-            dir = (int)Math.Pow(-1, (int)index / 90);
+            dir = (int)Math.Pow(-1, (int)index / 30);
             y += dir * 0.1f;
+            x += dir*0.2f;
             //z += dir * 0.025f;
-            _camera.SetMcamMatrixUVN(new Vector4(0, y, z), new Vector4(0, 0, -1, 1), new Vector4(0, 1, 0, 1));
+
+            _camera.SetMcamMatrixUVN(new Vector4(x, y, z), new Vector3(-x, 0, -z).Normalize(), new Vector4(0, 1, 0, 1));
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
