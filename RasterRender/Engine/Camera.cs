@@ -1,8 +1,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using RasterRender.Engine.Mathf;
+using RasterRender.Engine.Simple;
+using Color = System.Drawing.Color;
 
 namespace RasterRender.Engine
 {
@@ -377,9 +378,9 @@ namespace RasterRender.Engine
 
             for (int i = 0; i < triangles.Count; i += 3)
             {
-                DrawWire(t_verts[triangles[i]].pos, t_verts[triangles[i + 1]].pos);
-                DrawWire(t_verts[triangles[i + 1]].pos, t_verts[triangles[i + 2]].pos);
-                DrawWire(t_verts[triangles[i + 2]].pos, t_verts[triangles[i]].pos);
+                //DrawWire(t_verts[triangles[i]].pos, t_verts[triangles[i + 1]].pos);
+                //DrawWire(t_verts[triangles[i + 1]].pos, t_verts[triangles[i + 2]].pos);
+                //DrawWire(t_verts[triangles[i + 2]].pos, t_verts[triangles[i]].pos);
             }
         }
 

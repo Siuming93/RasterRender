@@ -1,7 +1,20 @@
-﻿using System;
+﻿
+using System;
+using RasterRender.Engine.Mathf;
 
-namespace RasterRender.Engine.Mathf
+namespace RasterRender.Engine.Simple
 {
+    public struct Color
+    {
+        public Color(float r, float g, float b)
+        {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            this.a = 1f;
+        }
+        public float r, g, b, a;
+    }
     public struct Vector2
     {
         public float x, y;
@@ -43,7 +56,6 @@ namespace RasterRender.Engine.Mathf
         }
 
     }
-
     public struct Vector3
     {
         public float x, y, z;
@@ -93,7 +105,6 @@ namespace RasterRender.Engine.Mathf
 
         public static Vector3 zero = new Vector3();
     }
-
     public struct Vector4
     {
         public float x, y, z, w;
@@ -130,5 +141,32 @@ namespace RasterRender.Engine.Mathf
         {
             return new Vector4(v.x * f, v.y * f, v.z * f, v.w * f);
         }
+    }
+    public struct Vertex
+    {
+        public Vector4 pos;
+        public Vector2 uv;
+        public Color color;
+        public float rhw;
+        public static Vertex Lerp(Vertex v1, Vertex v2, float t)
+        {
+            return new Vertex()
+            {
+                pos = Vector3.Lerp(v1.pos, v2.pos, t),
+                uv = Vector2.Lerp(v1.uv, v2.uv, t)
+            };
+        }
+        public static Vertex Division(Vertex v1, Vertex v2, float t)
+        {
+            return new Vertex()
+            {
+                pos = 1 / t * (v2.pos - v1.pos),
+                uv = 1 / t * (v2.uv - v1.uv),
+            };
+        }
+    }
+
+    class Simple3DEngine
+    {
     }
 }

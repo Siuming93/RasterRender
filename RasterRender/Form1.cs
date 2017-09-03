@@ -7,6 +7,8 @@ using RasterRender.Engine.Mathf;
 using Timer = System.Timers.Timer;
 using RasterRender.Engine;
 using RasterRender.Const;
+using RasterRender.Engine.Simple;
+using Color = System.Drawing.Color;
 
 namespace RasterRender
 {
@@ -69,7 +71,7 @@ namespace RasterRender
                 }
                 CamreaMove();
                 //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
-                _camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
+                //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
                 //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() {  2, 7, 3, }, PrimitiveConst.CubeUVs);
                 //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() { 2, 4, 6, 2, 7, 3,  }, PrimitiveConst.CubeUVs);
                 //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, new List<int>() { 4,5,6,1,2,3,});
@@ -105,6 +107,17 @@ namespace RasterRender
                     bitmap.SetPixel(i, height - 1 - j, _camera.wireFrameBuffer[i, j] ? Color.Green : originClor);
                 }
             }
+        }
+
+        private void DrawBox()
+        {
+            
+        }
+        private void DrawPanel(Camera camera, int a, int b, int c)
+        {
+            Vertex p1 = PrimitiveConst.mesh[a], p2 = PrimitiveConst.mesh[b], p3 = PrimitiveConst.mesh[c];
+            p1.uv.x = 0; p1.uv.y = 0; p2.uv.x = 0; p2.uv.y = 0;
+            p3.uv.x = 0; p3.uv.y = 0; p4.uv.x = 0; p2.uv.y = 0;
         }
 
         int dir;
