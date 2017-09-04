@@ -15,6 +15,11 @@ namespace RasterRender.Engine.Simple
         }
         public float r, g, b, a;
 
+        public override string ToString()
+        {
+            return string.Format("r:{0} g:{1} b:{2} a:{3}", r, g, b, a);
+        }
+
         public static Color Lerp(Color a, Color b, float t)
         {
             return new Color()
@@ -483,6 +488,7 @@ namespace RasterRender.Engine.Simple
         {
             this.width = width;
             this.height = height;
+            this.aspect_ratio = (float)width/height;
             this.fov = fov;
             this.clipMin = clipMin;
             this.clipMax = clipMax;
@@ -526,9 +532,9 @@ namespace RasterRender.Engine.Simple
             Vector4 u = n * v;
 
             mt_uvn.Init(
-                u.x, n.x, v.x, 0,
-                u.y, n.y, v.y, 0,
-                u.z, n.z, v.z, 0,
+                u.x, v.x, n.x, 0,
+                u.y, v.y, n.y, 0,
+                u.z, v.z, n.z, 0,
                 0, 0, 0, 1);
 
             //将平移矩阵乘以uvn矩阵,并将结果存储到相机变换矩阵中
@@ -585,7 +591,7 @@ namespace RasterRender.Engine.Simple
             {
                 for (int j = i + 1; j < 3; j++)
                 {
-                    if (v2fs[i].pos.y > v2fs[j].pos.y)
+                    if (v2fs[i].pos.y < v2fs[j].pos.y)
                     {
                         v2f t = v2fs[i];
                         v2fs[i] = v2fs[j];
@@ -660,7 +666,7 @@ namespace RasterRender.Engine.Simple
             int endX = MathUtil.Round(line.right.pos.x);
             int y = MathUtil.Round(line.left.pos.y);
 
-            //为了加速 并不重复计算插值
+            //为了加速 并不重复计算插值 z值计算有问题
             v2f step = v2f.Division(line.left, line.right, line.right.pos.x - line.left.pos.x);
 
             for (int i = startX, j = 0; i <= endX; i++, j++)
@@ -668,13 +674,14 @@ namespace RasterRender.Engine.Simple
                 float curZInv = line.left.pos.z + j * step.pos.z;
                 v2f curV2f = line.left + j * step;
                 //深度缓存
-                if (zInvBuffer[i, y] <= curZInv)
+                if (zInvBuffer[i, y] <= curV2f.pos.z)
                 {
-                    colorBuffer[i, y] = FragShader(ref curV2f);
-                    if (i == startX || i == endX)
+                    if (i == startX || i == endX || i == endX - 1 || i == endX - 2)
                     {
                         colorBuffer[i, y] = new Color() { r = 0xFF / 255, g = 0x00 / 255, b = 0xFF / 255 };
                     }
+                    colorBuffer[i, y] = FragShader(ref curV2f);
+                    
                     zInvBuffer[i, y] = curZInv;
                 }
             }
@@ -722,10 +729,10 @@ namespace RasterRender.Engine.Simple
                     uv = tInv * (v2.uv - v1.uv),
                     color = new Color()
                     {
-                        r = tInv * (v1.color.r - v2.color.r),
-                        g = tInv * (v1.color.g - v2.color.g),
-                        b = tInv * (v1.color.b - v2.color.b),
-                        a = tInv * (v1.color.a - v2.color.a),
+                        r = tInv * (v2.color.r - v1.color.r),
+                        g = tInv * (v2.color.g - v1.color.g),
+                        b = tInv * (v2.color.b - v1.color.b),
+                        a = tInv * (v2.color.a - v1.color.a),
                     }
                 };
             }
@@ -760,8 +767,23 @@ namespace RasterRender.Engine.Simple
             }
         }
 
-        private int textureWidth = 32;
-        private static Color[,] _texture = new Color[2, 2] { { new Color() {r= 0,g=0,b=0,a=1 }, new Color() { r = 1, g = 1, b = 1, a = 1 } }, { new Color() { r = 1, g = 1, b = 1, a = 1 }, new Color() { r = 0, g = 0, b = 0, a = 1 } } };
+        public void InitTexture()
+        {
+            _texture = new Color[textureWidth, textureWidth];
+            int cube = textureWidth/10;
+            for (int i = 0; i < textureWidth; i++)
+            {
+                for (int j = 0; j < textureWidth; j++)
+                {
+                    _texture[i, j] = (i/cube%2 + j/cube%2)%2 == 0
+                        ? new Color() {r = 0xFF/255, g = 0x00/255, b = 0xFF/255}
+                        : new Color() {r = 1, g = 1, b = 1, a = 1};
+                }
+            }
+        }
+
+        private int textureWidth = 200;
+        private static Color[,] _texture = new Color[2, 2] { { new Color() { r = 0xFF / 255, g = 0x00 / 255, b = 0xFF / 255 }, new Color() { r = 1, g = 1, b = 1, a = 1 } }, { new Color() { r = 1, g = 1, b = 1, a = 1 }, new Color() { r = 0xFF / 255, g = 0x00 / 255, b = 0xFF / 255 } } };
         private Color ReadTextture(float u, float v, float zInv)
         {
             u = MathUtil.Clamp01(u / zInv);
@@ -781,6 +803,7 @@ namespace RasterRender.Engine.Simple
         }
         private Color FragShader(ref v2f IN)
         {
+            return IN.color;
             return ReadTextture(IN.uv.x, IN.uv.y, IN.pos.z);
         }
 
