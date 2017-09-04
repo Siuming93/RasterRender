@@ -23,25 +23,16 @@ namespace RasterRender
         {
             InitializeComponent();
 
-            InitScene();
+            Init();
 
             StartLoop();
         }
 
-        private void InitScene()
+        private void Init()
         {
-            InitGameObject();
-            InitCamera();
-        }
-
-        private void InitGameObject()
-        {
-            //Scene.instance.AddGameObject(new GameObject() { verts = PrimitiveConst.CubeVertexs, triangles = PrimitiveConst.CubeTriangles });
-        }
-        private void InitCamera()
-        {
-            _camera = new Camera();
-            _camera.Init(0, new Vector4(0, 0f, 5, 1), new Vector4(0, 0, -1, 1), new Vector4(0, 1, 0, 1), 0.1f, 50f, 90f, width, height);
+            engine = new Simple3DEngine();
+            engine.SetCameraLookAt(new Vector4(0, 10f, 0, 1), new Vector4(0, -1, 0, 1), new Vector4(0, 0, 1, 1));
+            engine.SetCameraProperty(width, height, 90f, 0.1f, 50f);
         }
 
         private void StartLoop()
@@ -55,7 +46,7 @@ namespace RasterRender
         {
             _timer.Stop();
         }
-
+        Simple3DEngine engine = new Simple3DEngine();
         private object lockObj = new object();
         private int index;
         private Bitmap bitmap = new Bitmap(width, height);
@@ -69,7 +60,8 @@ namespace RasterRender
                 {
                     return;
                 }
-                CamreaMove();
+               // CamreaMove();
+                DrawBox();
                 //_camera.DrawWireFrame(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
                 //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, PrimitiveConst.CubeTriangles);
                 //_camera.DrawPrimitives(PrimitiveConst.CubeVertexs, new List<int>() {  2, 7, 3, }, PrimitiveConst.CubeUVs);
@@ -92,7 +84,8 @@ namespace RasterRender
             {
                 for (int j = 0; j < height; j++)
                 {
-                    bitmap.SetPixel(i, height - 1 - j, _camera.colorBuffer[i, j]);
+                    float r = engine.colorBuffer[i, j].r, g = engine.colorBuffer[i, j].g, b = engine.colorBuffer[i, j].b, a = engine.colorBuffer[i, j].a;
+                    bitmap.SetPixel(i, height - 1 - j, Color.FromArgb((int)r*255, (int)g *255, (int)b *255, (int)a *255));
                 }
             }
         }
@@ -111,13 +104,21 @@ namespace RasterRender
 
         private void DrawBox()
         {
-            
+            DrawPanel(_camera, 0, 1, 2, 3);
+            DrawPanel(_camera, 4, 5, 6, 7);
+            DrawPanel(_camera, 0, 4, 5, 1);
+            DrawPanel(_camera, 1, 5, 6, 2);
+            DrawPanel(_camera, 2, 6, 7, 3);
+            DrawPanel(_camera, 3, 7, 4, 0);
         }
-        private void DrawPanel(Camera camera, int a, int b, int c)
+        private void DrawPanel(Camera camera, int a, int b, int c, int d)
         {
-            Vertex p1 = PrimitiveConst.mesh[a], p2 = PrimitiveConst.mesh[b], p3 = PrimitiveConst.mesh[c];
-            p1.uv.x = 0; p1.uv.y = 0; p2.uv.x = 0; p2.uv.y = 0;
-            p3.uv.x = 0; p3.uv.y = 0; p4.uv.x = 0; p2.uv.y = 0;
+            Vertex p1 = PrimitiveConst.mesh[a], p2 = PrimitiveConst.mesh[b], p3 = PrimitiveConst.mesh[c], p4 = PrimitiveConst.mesh[d];
+            p1.uv.x = 0; p1.uv.y = 0; p2.uv.x = 0; p2.uv.y = 1;
+            p3.uv.x = 1; p3.uv.y = 1; p4.uv.x = 1; p4.uv.y = 0;
+
+            engine.DrawPrimitive(p1, p2, p3);
+            engine.DrawPrimitive(p3, p4, p1);
         }
 
         int dir;
@@ -132,7 +133,7 @@ namespace RasterRender
             x += dir*0.2f;
             //z += dir * 0.025f;
 
-            _camera.SetMcamMatrixUVN(new Vector4(x, y, z), new Vector3(-x, 0, -z).Normalize(), new Vector4(0, 1, 0, 1));
+            engine.SetCameraLookAt(new Vector4(x, y, z), new Vector3(-x, 0, -z).Normalize(), new Vector4(0, 1, 0, 1));
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)

@@ -44,7 +44,7 @@ namespace RasterRender.Engine
 
         public bool[,] wireFrameBuffer;
 
-        public float[,] zBuffer;
+        public float[,] zInvBuffer;
         public Color[,] colorBuffer;
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace RasterRender.Engine
 
             wireFrameBuffer = new bool[(int)width, (int)height];
             colorBuffer = new Color[(int)width, (int)height];
-            zBuffer = new float[(int)width, (int)height];
+            zInvBuffer = new float[(int)width, (int)height];
             _texture = new Color[textureWidth, textureWidth];
             for (int i = 0; i < textureWidth; i++)
             {
@@ -143,6 +143,7 @@ namespace RasterRender.Engine
             mcam = mt_inv * mt_uvn;
         }
 
+        public void Draw
         public void DrawPrimitives(List<Vertex> verts, List<int> triangles)
         {
             for (int i = 0; i < viewport_width; i++)
@@ -150,7 +151,7 @@ namespace RasterRender.Engine
                 for (int j = 0; j < viewport_Height; j++)
                 {
                     colorBuffer[i, j] = Color.Black;
-                    zBuffer[i, j] = float.MaxValue;
+                    zInvBuffer[i, j] = float.MinValue;
                 }
             }
             //将所有坐标准换为屏幕坐标先
@@ -287,7 +288,7 @@ namespace RasterRender.Engine
             for (float i = bottom; i < top; i++)
             {
                 float t = (i - bottom) / (top - bottom);
-                var line = new ScanLine() { left = Vertex.Lerp(v3, v1, t), right = Vertex.Lerp(v3, v2, t) };
+                var line = new ScanLine(Vertex.Lerp(v3, v1, t), Vertex.Lerp(v3, v2, t));
                 DrawScanLine(line);
                 count++;
             }
@@ -304,7 +305,7 @@ namespace RasterRender.Engine
             for (float i = bottom; i < top; i++)
             {
                 float t = (i - bottom) / (top - bottom);
-                var line = new ScanLine() { left = Vertex.Lerp(v2, v1, t), right = Vertex.Lerp(v3, v1, t) };
+                var line = new ScanLine(Vertex.Lerp(v2, v1, t), Vertex.Lerp(v3, v1, t));
                 DrawScanLine(line);
                 count++;
             }
@@ -320,21 +321,16 @@ namespace RasterRender.Engine
 
             for (int i = startX, j = 0; i <= endX; i++, j++)
             {
-                if (zBuffer[i, y] >= line.left.pos.z + j * step.pos.z)
+                float curZInv = line.left.pos.z + j * step.pos.z;
+                if (zInvBuffer[i, y] <= curZInv)
                 {
                     var uv = line.left.uv + j * step.uv;
-                    colorBuffer[i, y] = GetColor(uv.x, uv.y);
+                    colorBuffer[i, y] = GetColor(uv.x, uv.y, curZInv);
                     if (i == startX || i == endX)
                     {
                         colorBuffer[i, y] = Color.Aqua;
-                        if (zBuffer[i, y] != float.MaxValue)
-                        {
-                            int a = 0;
-                        }
                     }
-                    zBuffer[i, y] = line.left.pos.z + j * step.pos.z;
-
-
+                    zInvBuffer[i, y] = curZInv;
                 }
             }
         }
@@ -345,10 +341,10 @@ namespace RasterRender.Engine
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private Color GetColor(float u, float v)
+        private Color GetColor(float u, float v, float zInv)
         {
-            u = MathUtil.Clamp01(u);
-            v = MathUtil.Clamp01(v);
+            u = MathUtil.Clamp01(u / zInv);
+            v = MathUtil.Clamp01(v / zInv);
             int x = (int)(u * (textureWidth - 1));
             int y = (int)(v * (textureWidth - 1));
             return _texture[x, y];
@@ -427,7 +423,21 @@ namespace RasterRender.Engine
 
         struct ScanLine
         {
-            public Vertex left, right, vStep;
+            public Vertex left, right;
+
+            public ScanLine(Vertex left, Vertex right)
+            {
+                this.left = left;
+                this.right = right;
+
+                float leftZInv = 1.0f / left.pos.z;
+                this.left.pos.z = leftZInv;
+                this.left.uv = leftZInv * this.left.uv;
+
+                float rightZInv = 1.0f / right.pos.z;
+                this.right.pos.z = rightZInv;
+                this.right.uv = rightZInv * this.right.uv;
+            }
         }
     }
 }
