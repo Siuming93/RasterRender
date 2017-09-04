@@ -56,5 +56,12 @@ namespace RasterRender.Engine.Mathf
         {
             return (int) (a + 0.5f);
         }
+
+
+        public static bool FloatNear(float a, float b)
+        {
+            return (int)(a + 0.5) == (int)(b + 0.5);
+        }
+
     }
 }
