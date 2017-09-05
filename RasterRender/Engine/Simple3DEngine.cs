@@ -228,7 +228,7 @@ namespace RasterRender.Engine
                     {
                         colorBuffer[i, y] = new Color() { r = 0xFF / 255, g = 0x00 / 255, b = 0xFF / 255 };
                     }
-                    colorBuffer[i, y] = FragShader(ref curV2f, step.pos.z);
+                    colorBuffer[i, y] = FragShader(ref curV2f);
                     
                     zInvBuffer[i, y] = curZInv;
                 }
@@ -350,15 +350,6 @@ namespace RasterRender.Engine
             };
         }
         private Color FragShader(ref v2f IN)
-        {
-#if VertexColor
-            return IN.color;
-#else
-            return ReadTextture(IN.uv.x, IN.uv.y, IN.pos.z);
-#endif
-        }
-
-        private Color FragShader(ref v2f IN, float zStep)
         {
 #if VertexColor
             return IN.color;
