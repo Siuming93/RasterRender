@@ -30,14 +30,14 @@ namespace RasterRender
         private void Init()
         {
             engine = new Simple3DEngine();
-            engine.SetCameraLookAt(new Vector4(0, 3f, 0f, 1), new Vector4(0, -1, 0, 1), new Vector4(0, 0, 1, 1));
-            engine.SetCameraProperty(width, height, 90f, 0.1f, 50f);
+            engine.SetCameraLookAt(new Vector4(-2f, 2f, 2f, 1), new Vector4(1, -1, -1, 1), new Vector4(1, -1, 2, 1));
+            engine.SetCameraProperty(width, height, 120f, 0.1f, 50f);
             engine.InitTexture();
         }
 
         private void StartLoop()
         {
-            _timer = _timer ?? new Timer(1000f / 60);
+            _timer = _timer ?? new Timer(1000f / 30);
             _timer.Elapsed += Tick;
             _timer.Start();
         }
@@ -49,8 +49,8 @@ namespace RasterRender
         Simple3DEngine engine = new Simple3DEngine();
         private object lockObj = new object();
         private int index;
-        private Bitmap bitmap = new Bitmap(width, height);
-        private const int width = 400, height = 400;
+        private Bitmap bitmap = new Bitmap(800, 800);
+        private const int width = 800, height = 800;
         private void Tick(object sender, ElapsedEventArgs e)
         {
             lock (lockObj)
@@ -60,7 +60,7 @@ namespace RasterRender
                 {
                     return;
                 }
-               // CamreaMove();
+                //CamreaMove();
                 DrawBox();
                 DrawRenderTexture();
                  //DrawWireFrame();
@@ -74,12 +74,23 @@ namespace RasterRender
 
         private void DrawRenderTexture()
         {
-            for (int i = 0; i < width; i++)
+            int w = 800, h = 800;
+            for (int i = 0; i < w; i++)
             {
-                for (int j = 0; j < height; j++)
+                int x = (int)(i / (float)w * width);
+                for (int j = 0; j < h; j++)
                 {
-                    float r = engine.colorBuffer[i, j].r, g = engine.colorBuffer[i, j].g, b = engine.colorBuffer[i, j].b, a = engine.colorBuffer[i, j].a;
-                    bitmap.SetPixel(i, height - 1 - j, Color.FromArgb(ConverTo256(r),ConverTo256(g),ConverTo256(b),ConverTo256(a)));
+                    int y = (int)(j / (float)h * height);
+                    float r = engine.colorBuffer[x, y].r, g = engine.colorBuffer[x, y].g, b = engine.colorBuffer[x, y].b, a = engine.colorBuffer[x, y].a;
+                    var c = Color.FromArgb(ConverTo256(r), ConverTo256(g), ConverTo256(b), ConverTo256(a));
+                    if(c.A == 0)
+                    {
+                        bitmap.SetPixel(i, h - 1 - j, Color.SkyBlue);
+                    }
+                    else
+                    {
+                        bitmap.SetPixel(i, h - 1 - j, c);
+                    }
                 }
             }
         }
@@ -89,25 +100,13 @@ namespace RasterRender
             return (int)MathUtil.Clamp((int)(f * 255), 0, 255);
         }
 
-        private void DrawWireFrame()
-        {
-            for (int i = 0; i < width; i++)
-            {
-                for (int j = 0; j < height; j++)
-                {
-                    var originClor = bitmap.GetPixel(i, height - 1 - j);
-                    //bitmap.SetPixel(i, height - 1 - j, _camera.wireFrameBuffer[i, j] ? Color.Green : originClor);
-                }
-            }
-        }
-
         private void DrawBox()
         {
-            //DrawPanel(0, 1, 2, 3);
-            //DrawPanel(4, 5, 6, 7);
-            //DrawPanel(0, 4, 5, 1);
-            //DrawPanel(1, 5, 6, 2);
+            DrawPanel(0, 1, 2, 3);
+            DrawPanel(4, 5, 6, 7);
+            DrawPanel(0, 4, 5, 1);
             DrawPanel(2, 6, 7, 3);
+            DrawPanel(1, 5, 6, 2);
             DrawPanel(3, 7, 4, 0);
         }
         private void DrawPanel(int a, int b, int c, int d)
@@ -117,13 +116,13 @@ namespace RasterRender
             p3.uv.x = 1; p3.uv.y = 1; p4.uv.x = 1; p4.uv.y = 0;
 
             engine.DrawPrimitive(p1, p2, p3);
-            engine.DrawPrimitive(p3, p4, p1);
+            engine.DrawPrimitive(p4, p3, p1);
         }
 
         int dir;
-        private float x = -2;
-        float y = -2;
-        float z = 5;
+        private float x = 0;
+        float y = 3;
+        float z = 0;
         private void CamreaMove()
         {
             index++;
@@ -131,16 +130,17 @@ namespace RasterRender
             y += dir * 0.1f;
             x += dir*0.2f;
             //z += dir * 0.025f;
-
-            engine.SetCameraLookAt(new Vector4(x, y, z), new Vector3(-x, 0, -z).Normalize(), new Vector4(0, 1, 0, 1));
+            engine.SetCameraLookAt(new Vector4(x, y, z), new Vector4(0, -1, 0, 1), new Vector4(0, 0, 1, 1));
+            engine.SetCameraProperty(width, height, 90f, 0.1f, 50f);
         }
+
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
             lock (lockObj)
             {
                 _canvas = this.CreateGraphics();
-                _canvas.Clear(Color.Blue);
+                _canvas.Clear(Color.SkyBlue);
             }
         }
 

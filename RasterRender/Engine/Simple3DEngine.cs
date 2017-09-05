@@ -1,9 +1,11 @@
-﻿
+﻿//#define VertexColor
+
 using System;
 using RasterRender.Engine.Mathf;
 
 namespace RasterRender.Engine.Simple
 {
+    #region math
     public struct Color
     {
         public Color(float r, float g, float b)
@@ -45,6 +47,11 @@ namespace RasterRender.Engine.Simple
         {
             this.x = x;
             this.y = y;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("u:{0} v:{1}", x, y);
         }
 
         public static implicit operator TexCoord(Vector3 v)
@@ -138,6 +145,24 @@ namespace RasterRender.Engine.Simple
             this.z = z;
             this.w = w;
         }
+        public override string ToString()
+        {
+            return string.Format("x:{0} y:{1} z:{2} w:{3}", x, y, z, w);
+        }
+        public Vector4 Normoalize()
+        {
+            float x2 = (float)Math.Pow(x, 2);
+            float y2 = (float)Math.Pow(y, 2);
+            float z2 = (float)Math.Pow(z, 2);
+            float sum = x2 + y2 + z2;
+           ;
+            return new Vector4()
+            {
+                x = x > 0 ? (float)Math.Sqrt(x2 / sum) : -(float)Math.Sqrt(x2 / sum),
+                y = y > 0 ? (float)Math.Sqrt(y2 / sum) : -(float)Math.Sqrt(y2 / sum),
+                z = z > 0 ? (float)Math.Sqrt(z2 / sum) : -(float)Math.Sqrt(z2 / sum),
+            };
+        }
 
         public static Vector4 Lerp(Vector4 a, Vector4 b, float t)
         {
@@ -157,7 +182,7 @@ namespace RasterRender.Engine.Simple
 
         public static Vector4 operator -(Vector4 a, Vector4 b)
         {
-            return new Vector4(b.x - a.x, b.y - a.y, b.z - a.z, 1.0f);
+            return new Vector4(a.x - b.x, a.y - b.y, a.z - b.z, 1.0f);
         }
 
         public static Vector4 operator +(Vector4 a, Vector4 b)
@@ -181,6 +206,10 @@ namespace RasterRender.Engine.Simple
         public TexCoord uv;
         public Color color;
         public float rhw;
+        public override string ToString()
+        {
+            return pos.ToString();
+        }
         public static Vertex Lerp(Vertex v1, Vertex v2, float t)
         {
             return new Vertex()
@@ -452,7 +481,7 @@ namespace RasterRender.Engine.Simple
             return new Vector4(v4.x, v4.y, v4.z);
         }
     }
-
+    #endregion
     class Simple3DEngine
     {
         protected Vector4 position; //相机位置
@@ -479,8 +508,8 @@ namespace RasterRender.Engine.Simple
         public void SetCameraLookAt(Vector4 position, Vector4 eye, Vector4 up)
         {
             this.position = position;
-            this.eye = eye;
-            this.up = up;
+            this.eye = eye.Normoalize();
+            this.up = up.Normoalize();
 
             SetMcamMatrix();
         }
@@ -606,7 +635,11 @@ namespace RasterRender.Engine.Simple
                 //线 不画
                 return;
             }
-
+            for (int i = 0; i < 3; i++)
+            {
+                v2fs[i].pos.z = 1.0f / v2fs[i].pos.z;
+                v2fs[i].uv = v2fs[i].pos.z * v2fs[i].uv;
+            }
             if (MathUtil.FloatNear(v2fs[0].pos.y, v2fs[1].pos.y))
             {
                 DrawBottomTriangle(v2fs);
@@ -631,33 +664,26 @@ namespace RasterRender.Engine.Simple
                 v2fs[0] = v2fs[1];
                 v2fs[1] = t;
             }
-
+            
             float top = v2fs[0].pos.y;
             float bottom = v2fs[2].pos.y;
-
-            int count = 0;
             for (float i = bottom; i < top; i++)
             {
                 float t = (i - bottom) / (top - bottom);
-                var line = new ScanLine(v2f.Lerp(v2fs[2], v2fs[0], t), v2f.Lerp(v2fs[2], v2fs[1], t));
+                var line = new ScanLine(v2f.Lerp(v2fs[0], v2fs[2], t), v2f.Lerp(v2fs[1], v2fs[2], t));
                 DrawScanLine(line);
-                count++;
             }
         }
         private void DrawTopTriangle( v2f[] v2fs)
         {
             if (v2fs[1].pos.x > v2fs[2].pos.x) { v2f t = v2fs[1]; v2fs[1] = v2fs[2]; v2fs[2] = t; }
-
             float top = v2fs[0].pos.y;
             float bottom = v2fs[2].pos.y;
-
-            int count = 0;
             for (float i = bottom; i < top; i++)
             {
                 float t = (i - bottom) / (top - bottom);
                 var line = new ScanLine(v2f.Lerp(v2fs[1], v2fs[0], t), v2f.Lerp(v2fs[2], v2fs[0], t));
                 DrawScanLine(line);
-                count++;
             }
         }
         private void DrawScanLine(ScanLine line)
@@ -674,13 +700,13 @@ namespace RasterRender.Engine.Simple
                 float curZInv = line.left.pos.z + j * step.pos.z;
                 v2f curV2f = line.left + j * step;
                 //深度缓存
-                if (zInvBuffer[i, y] <= curV2f.pos.z)
+                if (zInvBuffer[i, y] < curV2f.pos.z)
                 {
                     if (i == startX || i == endX || i == endX - 1 || i == endX - 2)
                     {
                         colorBuffer[i, y] = new Color() { r = 0xFF / 255, g = 0x00 / 255, b = 0xFF / 255 };
                     }
-                    colorBuffer[i, y] = FragShader(ref curV2f);
+                    colorBuffer[i, y] = FragShader(ref curV2f, step.pos.z);
                     
                     zInvBuffer[i, y] = curZInv;
                 }
@@ -694,14 +720,6 @@ namespace RasterRender.Engine.Simple
             {
                 this.left = left;
                 this.right = right;
-
-                float leftZInv = 1.0f / left.pos.z;
-                this.left.pos.z = leftZInv;
-                this.left.uv = leftZInv * this.left.uv;
-
-                float rightZInv = 1.0f / right.pos.z;
-                this.right.pos.z = rightZInv;
-                this.right.uv = rightZInv * this.right.uv;
             }
         }
         struct v2f
@@ -783,7 +801,7 @@ namespace RasterRender.Engine.Simple
         }
 
         private int textureWidth = 200;
-        private static Color[,] _texture = new Color[2, 2] { { new Color() { r = 0xFF / 255, g = 0x00 / 255, b = 0xFF / 255 }, new Color() { r = 1, g = 1, b = 1, a = 1 } }, { new Color() { r = 1, g = 1, b = 1, a = 1 }, new Color() { r = 0xFF / 255, g = 0x00 / 255, b = 0xFF / 255 } } };
+        private static Color[,] _texture;
         private Color ReadTextture(float u, float v, float zInv)
         {
             u = MathUtil.Clamp01(u / zInv);
@@ -792,6 +810,14 @@ namespace RasterRender.Engine.Simple
             int y = (int)(v * (textureWidth - 1));
             return _texture[x, y];
         }
+
+        private Color ReadTextture(float u, float v)
+        {
+            int x = (int)(u * (textureWidth - 1));
+            int y = (int)(v * (textureWidth - 1));
+            return _texture[x, y];
+        }
+
         private v2f VertexShader(ref Vertex v)
         {
             return new v2f()
@@ -803,8 +829,20 @@ namespace RasterRender.Engine.Simple
         }
         private Color FragShader(ref v2f IN)
         {
+#if VertexColor
             return IN.color;
+#else
             return ReadTextture(IN.uv.x, IN.uv.y, IN.pos.z);
+#endif
+        }
+
+        private Color FragShader(ref v2f IN, float zStep)
+        {
+#if VertexColor
+            return IN.color;
+#else
+            return ReadTextture(IN.uv.x, IN.uv.y, IN.pos.z);
+#endif
         }
 
     }

@@ -43,10 +43,10 @@
             // 
             // Form1
             // 
-            this.ClientSize = new System.Drawing.Size(584, 562);
+            this.ClientSize = new System.Drawing.Size(784, 762);
             this.Controls.Add(this.button1);
-            this.MaximumSize = new System.Drawing.Size(600, 600);
-            this.MinimumSize = new System.Drawing.Size(600, 600);
+            this.MaximumSize = new System.Drawing.Size(800, 800);
+            this.MinimumSize = new System.Drawing.Size(800, 800);
             this.Name = "Form1";
             this.Text = "RendererDemo";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
