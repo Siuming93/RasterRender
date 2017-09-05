@@ -1,7 +1,6 @@
-﻿//#define VertexColor
+﻿#define VertexColor
 
 using System;
-using RasterRender.Engine.Mathf;
 
 namespace RasterRender.Engine.Simple
 {

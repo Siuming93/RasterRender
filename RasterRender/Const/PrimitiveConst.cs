@@ -1,7 +1,4 @@
 ﻿
-using RasterRender.Engine;
-using RasterRender.Engine.Mathf;
-using System.Collections.Generic;
 using RasterRender.Engine.Simple;
 
 namespace RasterRender.Const

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RasterRender.Engine.Mathf
+namespace RasterRender.Engine
 {
     public class MathUtil
     {

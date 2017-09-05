@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Timers;
 using System.Windows.Forms;
-using RasterRender.Engine.Mathf;
 using Timer = System.Timers.Timer;
 using RasterRender.Engine;
 using RasterRender.Const;
@@ -37,7 +35,7 @@ namespace RasterRender
 
         private void StartLoop()
         {
-            _timer = _timer ?? new Timer(1000f / 30);
+            _timer = _timer ?? new Timer(1000f / 5);
             _timer.Elapsed += Tick;
             _timer.Start();
         }
