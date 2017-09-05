@@ -2,7 +2,7 @@
 
 using System;
 
-namespace RasterRender.Engine.Simple
+namespace RasterRender.Engine
 {
     #region math
     public struct Color

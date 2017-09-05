@@ -5,7 +5,6 @@ using System.Windows.Forms;
 using Timer = System.Timers.Timer;
 using RasterRender.Engine;
 using RasterRender.Const;
-using RasterRender.Engine.Simple;
 using Color = System.Drawing.Color;
 
 namespace RasterRender
