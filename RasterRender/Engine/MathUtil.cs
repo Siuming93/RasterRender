@@ -13,6 +13,7 @@ namespace RasterRender.Engine
             this.b = b;
             this.a = 1f;
         }
+
         public float r, g, b, a;
 
         public override string ToString()
@@ -31,6 +32,13 @@ namespace RasterRender.Engine
             };
         }
 
+        public static Color operator *(Color c, float f)
+        {
+            c.r *= f;
+            c.g *= f;
+            c.b *= f;
+            return c;
+        }
     }
     public struct TexCoord
     {
@@ -173,6 +181,11 @@ namespace RasterRender.Engine
             };
         }
 
+        public static float Dot(Vector4 l, Vector4 r)
+        {
+            return l.x*r.x + l.y*r.y + l.z*r.z;
+        }
+
         public static implicit operator Vector4(Vector3 v)
         {
             return new Vector4(v.x, v.y, v.z, 0);
@@ -203,6 +216,7 @@ namespace RasterRender.Engine
         public Vector4 pos;
         public TexCoord uv;
         public Color color;
+        public Vector4 normal;
         public float rhw;
         public override string ToString()
         {
@@ -496,6 +510,15 @@ namespace RasterRender.Engine
             return value;
         }
 
+        public static int Clamp(int value, int min, int max)
+        {
+            if (value < min)
+                return min;
+            if (value > max)
+                return max;
+            return value;
+        }
+
         public static float Clamp01(float value)
         {
             if ((double)value < 0.0)
@@ -538,6 +561,11 @@ namespace RasterRender.Engine
         public static bool FloatNear(float a, float b)
         {
             return (int)(a + 0.5) == (int)(b + 0.5);
+        }
+
+        public static Vector4 CalcNormal(Vector4 a, Vector4 b)
+        {
+            return (a*b).Normoalize();
         }
 
     }
