@@ -1,4 +1,4 @@
-﻿//#define VertexColor
+﻿#define VertexColor
 #define Lambert
 
 using System;
@@ -400,10 +400,7 @@ namespace RasterRender.Engine
         }
         private Color FragShader(ref v2f IN)
         {
-
-#if VertexColor
-            return IN.color;
-#elif Lambert
+#if Lambert
             return FragShaderLambert(ref IN, lightDir,lightColor);
 #else
             return ReadTextture(IN.uv.x, IN.uv.y, IN.pos.z);
@@ -412,9 +409,13 @@ namespace RasterRender.Engine
 
         private Color FragShaderLambert(ref v2f IN, Vector4 lightDir, Color lightColor)
         {
-            Color c = ReadTexttureBilinear(IN.uv.x, IN.uv.y, IN.pos.z);
+#if VertexColor
+            Color c = IN.color;
+#else
+            Color c = ReadTextture(IN.uv.x, IN.uv.y, IN.pos.z);
+#endif
             float diff = Math.Max(0, Vector4.Dot(IN.normal, lightDir));
-            c = c* diff;
+            c = c * diff;
             return c;
         }
 
