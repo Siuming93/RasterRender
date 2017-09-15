@@ -1,4 +1,5 @@
-﻿#define VertexColor
+﻿//#define VertexColor
+#define Lambert
 
 using System;
 
@@ -14,7 +15,7 @@ namespace RasterRender.Engine
 
         protected float height; //垂直视距
         protected float width;  // 水平视距
-        private float aspect_ratio; //屏幕的宽高比
+        protected float aspectRatio; //屏幕的宽高比
         protected float fov;    //视角大小
 
         protected float clipMin;
@@ -23,6 +24,9 @@ namespace RasterRender.Engine
         private Matrix4x4 mcam; //用于存储世界坐标到相机坐标变换矩阵
         private Matrix4x4 mper; //用于存储相机坐标到透视坐标变换矩阵
         private Matrix4x4 mscr; //用于存储透视坐标到屏幕坐标变换矩阵
+
+        protected Vector4 lightDir;
+        protected Color lightColor;
 
         public float[,] zInvBuffer;     //深度缓存   
         public Color[,] colorBuffer;    //颜色缓存
@@ -35,20 +39,21 @@ namespace RasterRender.Engine
 
             SetMcamMatrix();
         }
+
         public void SetCameraProperty(int width, int height, float fov, float clipMin, float clipMax)
         {
             this.width = width;
             this.height = height;
-            this.aspect_ratio = (float)width/height;
+            this.aspectRatio = (float) width/height;
             this.fov = fov;
             this.clipMin = clipMin;
             this.clipMax = clipMax;
 
-            float tan_fov_div2 = (float)Math.Tan(fov / 2 / 180f * Math.PI);
-            float viewW = 1.0f / tan_fov_div2;
+            float tan_fov_div2 = (float) Math.Tan(fov/2/180f*Math.PI);
+            float viewW = 1.0f/tan_fov_div2;
             mper.Init(
                 viewW, 0, 0, 0,
-                0, viewW * aspect_ratio, 0, 0,
+                0, viewW*aspectRatio, 0, 0,
                 0, 0, 1, 1,
                 0, 0, 0, 0);
             mscr.Init(
@@ -59,6 +64,12 @@ namespace RasterRender.Engine
 
             colorBuffer = new Color[width, height];
             zInvBuffer = new float[width, height];
+        }
+
+        public void SetDrectionalLight(Vector4 dir, Color color)
+        {
+            this.lightDir = dir.Normoalize();
+            this.lightColor = color;
         }
         private void SetMcamMatrix()
         {
@@ -125,16 +136,22 @@ namespace RasterRender.Engine
         }
         public void DrawPrimitive(Vertex v1, Vertex v2, Vertex v3)
         {
+            Vector4 normal = MathUtil.CalcNormal(v1.pos - v2.pos, v3.pos - v2.pos);
+            //背面裁剪
+            if (Vector4.Dot(normal, eye) < 0)
+                return;
             TransformWorldToScreen(ref v1);
             TransformWorldToScreen(ref v2);
             TransformWorldToScreen(ref v3);
             if (CheckCVV(v1.pos) != 0 || CheckCVV(v2.pos) != 0 || CheckCVV(v3.pos) != 0)
                 return;
 
+
             Vertex[] verts = new[] { v1, v2, v3 };
             v2f[] v2fs = new v2f[3];
             for(int i =0; i < 3; i++)
             {
+                verts[i].normal = normal;
                 v2fs[i] = VertexShader(ref verts[i]);
             }
 
@@ -249,6 +266,7 @@ namespace RasterRender.Engine
             public Vector4 pos;
             public Color color;
             public TexCoord uv;
+            public Vector4 normal;
 
             public static v2f Lerp(v2f v1, v2f v2, float t)
             {
@@ -257,6 +275,7 @@ namespace RasterRender.Engine
                     pos = Vector4.Lerp(v1.pos, v2.pos, t),
                     color = Color.Lerp(v1.color, v2.color, t),
                     uv = TexCoord.Lerp(v1.uv, v2.uv, t),
+                    normal =  v1.normal,
                 };
             }
 
@@ -290,6 +309,7 @@ namespace RasterRender.Engine
                         b = (v1.color.b + v2.color.b),
                         a = (v1.color.a + v2.color.a),
                     },
+                    normal = v1.normal,
                 };
             }
             public static v2f operator *(float f, v2f v)
@@ -303,7 +323,8 @@ namespace RasterRender.Engine
                     b = f * v.color.b,
                     a = f * v.color.a,
                 };
-                return v;
+
+            return v;
             }
         }
 
@@ -316,13 +337,14 @@ namespace RasterRender.Engine
                 for (int j = 0; j < textureWidth; j++)
                 {
                     _texture[i, j] = (i/cube%2 + j/cube%2)%2 == 0
-                        ? new Color() {r = 0xFF/255, g = 0x00/255, b = 0xFF/255}
-                        : new Color() {r = 1, g = 1, b = 1, a = 1};
+                        ? new Color() { r = 0 , g = 0xFF / 255, b = 0xFF / 255, a = 1 }
+                        : new Color() { r = 1, g = 1, b = 1, a = 1 };
                 }
             }
         }
 
         private int textureWidth = 200;
+        private int textureHeight = 200;
         private static Color[,] _texture;
         private Color ReadTextture(float u, float v, float zInv)
         {
@@ -331,6 +353,32 @@ namespace RasterRender.Engine
             int x = (int)(u * (textureWidth - 1));
             int y = (int)(v * (textureWidth - 1));
             return _texture[x, y];
+        }
+
+        private Color ReadTexttureBilinear(float u, float v, float zInv)
+        {
+            u = MathUtil.Clamp01(u / zInv);
+            v = MathUtil.Clamp01(v / zInv);
+            //wrap
+            u = u - (int) u;
+            v = v - (int) v;
+
+            float x = (u * (textureWidth - 1));
+            float y = (v * (textureHeight - 1));
+            int x0 = (int) x;
+            int y0 = (int) y;
+            int x1 = MathUtil.Clamp(x0 + 1, 0, textureWidth - 1);
+            int y1 = MathUtil.Clamp(y0 + 1, 0, textureHeight - 1);
+
+            Color c00 = _texture[x0, y0];
+            Color c01 = _texture[x0, y1];
+            Color c10 = _texture[x1, y0];
+            Color c11 = _texture[x1, y1];
+
+            float xt = x - x0;
+            float yt = y - y0;
+
+            return Color.Lerp(Color.Lerp(c00, c01, xt), Color.Lerp(c10, c11, xt), yt);
         }
 
         private Color ReadTextture(float u, float v)
@@ -347,15 +395,27 @@ namespace RasterRender.Engine
                 pos = v.pos,
                 uv = v.uv,
                 color = v.color,
+                normal = v.normal,
             };
         }
         private Color FragShader(ref v2f IN)
         {
+
 #if VertexColor
             return IN.color;
+#elif Lambert
+            return FragShaderLambert(ref IN, lightDir,lightColor);
 #else
             return ReadTextture(IN.uv.x, IN.uv.y, IN.pos.z);
 #endif
+        }
+
+        private Color FragShaderLambert(ref v2f IN, Vector4 lightDir, Color lightColor)
+        {
+            Color c = ReadTexttureBilinear(IN.uv.x, IN.uv.y, IN.pos.z);
+            float diff = Math.Max(0, Vector4.Dot(IN.normal, lightDir));
+            c = c* diff;
+            return c;
         }
 
     }

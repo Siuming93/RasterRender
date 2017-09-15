@@ -6,6 +6,7 @@ using Timer = System.Timers.Timer;
 using RasterRender.Engine;
 using RasterRender.Const;
 using Color = System.Drawing.Color;
+using System.Threading;
 
 namespace RasterRender
 {
@@ -27,6 +28,7 @@ namespace RasterRender
         private void Init()
         {
             engine = new Simple3DEngine();
+            engine.SetDrectionalLight(new Vector4(1,-6,-2), new Engine.Color(1,1,1));
             engine.SetCameraLookAt(new Vector4(-2f, 2f, 2f, 1), new Vector4(1, -1, -1, 1), new Vector4(1, -1, 2, 1));
             engine.SetCameraProperty(width, height, 120f, 0.1f, 50f);
             engine.InitTexture();
@@ -34,9 +36,22 @@ namespace RasterRender
 
         private void StartLoop()
         {
+            //var thead = new Thread(TrikThead);
+            //thead.Start();
             _timer = _timer ?? new Timer(1000f / 5);
             _timer.Elapsed += Tick;
             _timer.Start();
+        }
+
+
+        private void TrikThead()
+        {
+            int i = 0;
+            while (true)
+            {
+                Tick(null, null);
+                Thread.Sleep(1000/50); 
+            }
         }
 
         private void StopLoop()
@@ -79,10 +94,10 @@ namespace RasterRender
                 {
                     int y = (int)(j / (float)h * height);
                     float r = engine.colorBuffer[x, y].r, g = engine.colorBuffer[x, y].g, b = engine.colorBuffer[x, y].b, a = engine.colorBuffer[x, y].a;
-                    var c = Color.FromArgb(ConverTo256(r), ConverTo256(g), ConverTo256(b), ConverTo256(a));
+                    var c = Color.FromArgb(ConverTo256(a),ConverTo256(r), ConverTo256(g), ConverTo256(b));
                     if(c.A == 0)
                     {
-                        bitmap.SetPixel(i, h - 1 - j, Color.SkyBlue);
+                        bitmap.SetPixel(i, h - 1 - j, Color.CornflowerBlue);
                     }
                     else
                     {
@@ -114,6 +129,8 @@ namespace RasterRender
 
             engine.DrawPrimitive(p1, p2, p3);
             engine.DrawPrimitive(p4, p3, p1);
+            engine.DrawPrimitive(p3, p2, p1);
+            engine.DrawPrimitive(p1, p3, p4);
         }
 
         int dir;
